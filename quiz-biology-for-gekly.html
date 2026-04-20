@@ -1,0 +1,249 @@
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font-sans);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background: #f5f7fb;
+}
+
+/* Center container */
+#quiz-wrap, #results {
+  width: 100%;
+  max-width: 660px;
+  background: white;
+  padding: 20px;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+
+/* keep your original styles below */
+#progress-bar-bg { height: 6px; background: var(--color-background-secondary); border-radius: 99px; margin-bottom: 1.5rem; }
+#progress-bar { height: 6px; background: #534AB7; border-radius: 99px; transition: width 0.3s; }
+#section-label { font-size: 12px; font-weight: 500; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.5rem; }
+#q-counter { font-size: 13px; color: var(--color-text-secondary); margin-bottom: 0.75rem; }
+#q-text { font-size: 17px; font-weight: 500; color: var(--color-text-primary); line-height: 1.5; margin-bottom: 1.25rem; }
+
+.opt { display: flex; align-items: flex-start; gap: 12px; padding: 12px 14px; border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); margin-bottom: 8px; cursor: pointer; background: var(--color-background-primary); transition: border-color 0.15s, background 0.15s; }
+.opt:hover { border-color: var(--color-border-secondary); background: var(--color-background-secondary); }
+.opt.selected { border-color: #534AB7; background: #EEEDFE; }
+.opt.correct { border-color: #0F6E56; background: #E1F5EE; }
+.opt.wrong { border-color: #993C1D; background: #FAECE7; }
+
+.opt-letter { width: 22px; height: 22px; min-width: 22px; border-radius: 50%; border: 1.5px solid var(--color-border-secondary); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 500; color: var(--color-text-secondary); }
+.opt.selected .opt-letter { border-color: #534AB7; background: #534AB7; color: #fff; }
+.opt.correct .opt-letter { border-color: #0F6E56; background: #0F6E56; color: #fff; }
+.opt.wrong .opt-letter { border-color: #993C1D; background: #993C1D; color: #fff; }
+
+.opt-text { font-size: 15px; color: var(--color-text-primary); line-height: 1.4; padding-top: 1px; }
+
+#feedback { margin-top: 10px; font-size: 14px; padding: 10px 14px; border-radius: var(--border-radius-md); display: none; line-height: 1.5; }
+#feedback.correct { background: #E1F5EE; color: #0F6E56; }
+#feedback.wrong { background: #FAECE7; color: #993C1D; }
+
+#btn-row { display: flex; justify-content: space-between; align-items: center; margin-top: 1.25rem; }
+#score-mini { font-size: 13px; color: var(--color-text-secondary); }
+
+button {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  padding: 8px 20px;
+  border-radius: var(--border-radius-md);
+  border: 0.5px solid var(--color-border-secondary);
+  background: transparent;
+  color: var(--color-text-primary);
+  cursor: pointer;
+}
+button:hover { background: var(--color-background-secondary); }
+button:disabled { opacity: 0.35; cursor: default; }
+
+#btn-next { background: #534AB7; color: #fff; border-color: #534AB7; }
+#btn-next:hover { background: #3C3489; }
+
+#results { display: none; text-align: center; }
+
+.stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 1.5rem; }
+.stat { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 14px; text-align: center; }
+.stat-num { font-size: 26px; font-weight: 500; }
+.stat-lbl { font-size: 12px; color: var(--color-text-secondary); margin-top: 2px; }
+
+.stat.good .stat-num { color: #0F6E56; }
+.stat.bad .stat-num { color: #993C1D; }
+.stat.total .stat-num { color: #534AB7; }
+
+#btn-retry { background: #534AB7; color: #fff; border-color: #534AB7; }
+#btn-retry:hover { background: #3C3489; }
+</style>
+
+<div id="quiz-wrap">
+  <div id="progress-bar-bg"><div id="progress-bar" style="width:2%"></div></div>
+  <div id="section-label"></div>
+  <div id="q-counter"></div>
+  <div id="q-text"></div>
+  <div id="options"></div>
+  <div id="feedback"></div>
+  <div id="btn-row">
+    <div id="score-mini"></div>
+    <button id="btn-next" onclick="nextQ()" disabled>Next →</button>
+  </div>
+</div>
+
+<div id="results">
+  <h2>Quiz complete!</h2>
+  <p>Here's how you did across all four sections.</p>
+  <div class="stat-grid">
+    <div class="stat good"><div class="stat-num" id="r-correct"></div><div class="stat-lbl">Correct</div></div>
+    <div class="stat bad"><div class="stat-num" id="r-wrong"></div><div class="stat-lbl">Incorrect</div></div>
+    <div class="stat total"><div class="stat-num" id="r-pct"></div><div class="stat-lbl">Score</div></div>
+  </div>
+  <div id="section-breakdown">
+    <h3>Performance by section</h3>
+    <div id="sec-rows"></div>
+  </div>
+  <button id="btn-retry" onclick="restart()">Retake quiz</button>
+</div>
+
+<script>
+const questions = [
+  {s:0,q:"What is the main purpose of cell division in living organisms?",o:["Only to produce energy","To destroy old cells","Growth, repair, maintenance, and reproduction","To create genetic mutations"],a:2},
+  {s:0,q:"What is the name of the process where a single parent cell divides to produce two identical daughter cells?",o:["Meiosis","Mitosis","Cytokinesis only","Binary fission"],a:1},
+  {s:0,q:"Which type of cell division is essential for the formation of gametes (sperm and eggs)?",o:["Mitosis","Meiosis","Phagocytosis","Cytokinesis"],a:1},
+  {s:0,q:"What does DNA stand for?",o:["Ribonucleic acid","Deoxyribonucleic acid","Deoxyribose protein","Dinucleotide acid"],a:1},
+  {s:0,q:"In DNA, which nitrogenous bases pair together?",o:["A–G and T–C","A–T and G–C","A–C and T–G","A–A and T–T"],a:1},
+  {s:0,q:"What is the shape of DNA called?",o:["Single helix","Alpha helix","Double helix","Triple helix"],a:2},
+  {s:0,q:"What is chromatin?",o:["A single protein molecule","A complex of DNA and proteins (histones) in the nucleus","Another name for a ribosome","A type of bacterial cell wall"],a:1},
+  {s:0,q:"When DNA is tightly condensed and visible during cell division, it is called:",o:["Chromatin","Nucleotide","Chromosome","Centrosome"],a:2},
+  {s:0,q:"A chromatid is:",o:["One copy of a chromosome","The central region of a chromosome","A type of RNA","The cell membrane"],a:0},
+  {s:0,q:"Sister chromatids are held together at a region called the:",o:["Centrosome","Centromere","Nucleolus","Kinetochore"],a:1},
+  {s:0,q:"How many chromosomes do human somatic (body) cells have?",o:["23","46","48","24"],a:1},
+  {s:0,q:"A cell whose genes will not be passed onto future generations is called a:",o:["Germ cell","Gamete","Somatic cell","Zygote"],a:2},
+  {s:0,q:"What is formed when a sperm cell unites with an egg cell?",o:["Gamete","Chromatid","Zygote","Endospore"],a:2},
+  {s:1,q:"The cell cycle is divided into two major phases. They are:",o:["Mitosis and cytokinesis","Interphase and mitotic (M) phase","Prophase and telophase","G1 and G2"],a:1},
+  {s:1,q:"During which phase of interphase does the cell synthesize a complete copy of its DNA?",o:["G1 phase","G2 phase","S phase","M phase"],a:2},
+  {s:1,q:"Which phase of interphase is the primary growth phase and the longest phase?",o:["G1 phase","S phase","G2 phase","M phase"],a:0},
+  {s:1,q:"During the G2 phase, the cell:",o:["Divides its nucleus","Copies its DNA","Produces proteins and prepares for mitosis","Undergoes cytokinesis"],a:2},
+  {s:1,q:"The correct order of the stages of mitosis is:",o:["Prophase, metaphase, anaphase, telophase","Metaphase, prophase, anaphase, telophase","Anaphase, metaphase, prophase, telophase","Telophase, anaphase, metaphase, prophase"],a:0},
+  {s:1,q:"During which phase of mitosis do chromosomes align at the equator (metaphase plate) of the cell?",o:["Prophase","Metaphase","Anaphase","Telophase"],a:1},
+  {s:1,q:"During anaphase, what is pulled apart to opposite poles of the cell?",o:["Homologous chromosomes","Sister chromatids","Centrosomes","Nuclear envelopes"],a:1},
+  {s:1,q:"What is cytokinesis?",o:["Division of the nucleus","Division of the cytoplasm","Replication of DNA","Condensation of chromosomes"],a:1},
+  {s:1,q:"The G1 checkpoint checks for:",o:["Proper spindle attachment","Complete DNA replication only","Cell size, nutrients, and DNA integrity","Chromosome alignment"],a:2},
+  {s:1,q:"Which checkpoint ensures all chromosomes are properly attached to spindle fibers before anaphase?",o:["G1 checkpoint","G2 checkpoint","Spindle checkpoint","S checkpoint"],a:2},
+  {s:1,q:"If a cell does not pass the G1 checkpoint, it may enter a resting phase called:",o:["G0","G3","M0","S0"],a:0},
+  {s:2,q:"What is the main purpose of meiosis?",o:["To produce identical body cells","To produce gametes with half the number of chromosomes","To repair damaged tissue","To increase cell size"],a:1},
+  {s:2,q:"A diploid cell (2n) undergoes meiosis. How many haploid (n) daughter cells are produced?",o:["2","4","8","1"],a:1},
+  {s:2,q:"During which phase of meiosis I do homologous chromosomes pair up and crossing over occur?",o:["Metaphase I","Anaphase I","Prophase I","Telophase I"],a:2},
+  {s:2,q:"What is crossing over?",o:["The separation of sister chromatids","The exchange of genetic material between homologous chromosomes","The division of the cytoplasm","The replication of DNA"],a:1},
+  {s:2,q:"The X-shaped structures where crossing over occurs are called:",o:["Centromeres","Chiasmata","Tetrads","Kinetochores"],a:1},
+  {s:2,q:"During metaphase I of meiosis, what aligns at the equator?",o:["Individual chromosomes","Sister chromatids","Pairs of homologous chromosomes (tetrads)","Centrosomes"],a:2},
+  {s:2,q:"In anaphase I of meiosis, what separates?",o:["Sister chromatids","Homologous chromosomes (each still with two chromatids)","Centromeres","Nucleoli"],a:1},
+  {s:2,q:"Meiosis II is similar to mitosis because in both processes:",o:["Homologous chromosomes pair up","Crossing over occurs","Sister chromatids separate","The daughter cells are diploid"],a:2},
+  {s:2,q:"Which statement is true about mitosis?",o:["Produces four genetically different haploid cells","Produces two genetically identical diploid cells","Involves two nuclear divisions","Only occurs in the gonads"],a:1},
+  {s:2,q:"Which statement is true about meiosis?",o:["Produces two identical daughter cells","Involves one nuclear division","Produces four genetically different haploid cells","Occurs in all body cells"],a:2},
+  {s:2,q:"A human sperm cell is:",o:["Diploid (2n)","Haploid (n)","Tetraploid (4n)","A somatic cell"],a:1},
+  {s:3,q:"Bacteria are classified as which type of cell?",o:["Eukaryotic","Prokaryotic","Multicellular","Fungal"],a:1},
+  {s:3,q:"Which of the following is NOT a basic shape of bacteria?",o:["Coccus (spherical)","Bacillus (rod-shaped)","Spirillum (spiral)","Cubicus (cube-shaped)"],a:3},
+  {s:3,q:"The arrangement of cocci in chains is called:",o:["Staphylococci","Streptococci","Diplococci","Tetrads"],a:1},
+  {s:3,q:"The primary function of the bacterial cell wall is to:",o:["Produce energy","Maintain shape and prevent bursting from osmosis","Store genetic material","Synthesize proteins"],a:1},
+  {s:3,q:"The bacterial cell membrane is composed mainly of:",o:["Cellulose","Peptidoglycan","Phospholipids","Chitin"],a:2},
+  {s:3,q:"The nucleoid region of a bacterium contains:",o:["A true nucleus with a nuclear membrane","A single circular chromosome","Multiple linear chromosomes","Only RNA"],a:1},
+  {s:3,q:"Small, circular extrachromosomal DNA molecules found in bacteria are called:",o:["Ribosomes","Nucleoids","Plasmids","Endospores"],a:2},
+  {s:3,q:"Which bacterial structure is used for attachment to surfaces and not for movement?",o:["Flagella","Pili or fimbriae","Capsule","Cell wall"],a:1},
+  {s:3,q:"A highly resistant resting structure formed by some bacteria (e.g., Bacillus and Clostridium) to survive harsh conditions is called:",o:["A plasmid","A ribosome","An endospore","A capsule"],a:2},
+  {s:3,q:"The function of the bacterial capsule is to:",o:["Help with movement","Synthesize proteins","Protect the cell and evade host defense mechanisms (phagocytosis)","Replicate DNA"],a:2},
+  {s:3,q:"Bacterial ribosomes are 70S in size. Which antibiotic binds to the 30S subunit to disrupt protein synthesis?",o:["Erythromycin","Penicillin","Streptomycin","Tetracycline"],a:2},
+  {s:3,q:"A bacterium with a single flagellum at one end is called:",o:["Amphitrichous","Lophotrichous","Peritrichous","Monotrichous"],a:3},
+  {s:3,q:"What is the function of the bacterial cell membrane?",o:["It is a rigid structure that gives shape","It controls what enters and leaves the cell","It prevents the cell from bursting","It stores the genetic material"],a:1},
+  {s:3,q:"Which bacterial shape is described as curved or comma-shaped?",o:["Spirillum","Spirochete","Vibrio","Bacillus"],a:2},
+  {s:3,q:"True or False: All bacteria are harmful and cause disease.",o:["True","False (some are beneficial, e.g., in digestion and fermentation)"],a:1},
+];
+
+const sections = ["Section 1: Cell Division & DNA/Chromosomes","Section 2: The Cell Cycle","Section 3: Sexual Reproduction & Meiosis","Section 4: Bacterial Morphology & Structure"];
+const letters = ["A","B","C","D"];
+
+let current = 0, score = 0, answered = false;
+let sectionScores = [[0,0],[0,0],[0,0],[0,0]];
+
+function render() {
+  const q = questions[current];
+  document.getElementById('section-label').textContent = sections[q.s];
+  document.getElementById('q-counter').textContent = `Question ${current+1} of ${questions.length}`;
+  document.getElementById('q-text').textContent = q.q;
+  document.getElementById('progress-bar').style.width = `${((current)/questions.length)*100+2}%`;
+  document.getElementById('score-mini').textContent = `Score: ${score}/${current}`;
+  const opts = document.getElementById('options');
+  opts.innerHTML = '';
+  q.o.forEach((o,i) => {
+    const d = document.createElement('div');
+    d.className = 'opt';
+    d.innerHTML = `<div class="opt-letter">${letters[i]}</div><div class="opt-text">${o}</div>`;
+    d.onclick = () => select(i);
+    opts.appendChild(d);
+  });
+  document.getElementById('feedback').style.display = 'none';
+  document.getElementById('btn-next').disabled = true;
+  answered = false;
+}
+
+function select(i) {
+  if (answered) return;
+  answered = true;
+  const q = questions[current];
+  const opts = document.getElementById('options').children;
+  const fb = document.getElementById('feedback');
+  sectionScores[q.s][1]++;
+  if (i === q.a) {
+    score++;
+    sectionScores[q.s][0]++;
+    opts[i].className = 'opt correct';
+    fb.className = 'correct';
+    fb.textContent = '✓ Correct!';
+  } else {
+    opts[i].className = 'opt wrong';
+    opts[q.a].className = 'opt correct';
+    fb.className = 'wrong';
+    fb.textContent = `✗ Incorrect. The correct answer is: ${q.o[q.a]}`;
+  }
+  fb.style.display = 'block';
+  document.getElementById('btn-next').disabled = false;
+  document.getElementById('score-mini').textContent = `Score: ${score}/${current+1}`;
+}
+
+function nextQ() {
+  current++;
+  if (current >= questions.length) { showResults(); return; }
+  render();
+}
+
+function showResults() {
+  document.getElementById('quiz-wrap').style.display = 'none';
+  const r = document.getElementById('results');
+  r.style.display = 'block';
+  document.getElementById('r-correct').textContent = score;
+  document.getElementById('r-wrong').textContent = questions.length - score;
+  document.getElementById('r-pct').textContent = Math.round(score/questions.length*100) + '%';
+  const sr = document.getElementById('sec-rows');
+  sr.innerHTML = '';
+  sections.forEach((name, i) => {
+    const [c, t] = sectionScores[i];
+    const pct = t ? Math.round(c/t*100) : 0;
+    sr.innerHTML += `<div class="sec-row">
+      <div class="sec-name">${name.replace(/Section \d+: /,'')}</div>
+      <div class="sec-bar-bg"><div class="sec-bar" style="width:${pct}%"></div></div>
+      <div class="sec-score">${c}/${t}</div>
+    </div>`;
+  });
+}
+
+function restart() {
+  current = 0; score = 0; answered = false;
+  sectionScores = [[0,0],[0,0],[0,0],[0,0]];
+  document.getElementById('results').style.display = 'none';
+  document.getElementById('quiz-wrap').style.display = 'block';
+  render();
+}
+
+render();
+</script>
