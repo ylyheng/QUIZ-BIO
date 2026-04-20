@@ -65,6 +65,40 @@ button:disabled { opacity: 0.35; cursor: default; }
 
 #results { display: none; text-align: center; }
 
+#celebration-images {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+.celebration-img {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow: 0 4px 12px rgba(83, 74, 183, 0.2);
+  animation: bounce 1.5s infinite;
+}
+
+.celebration-img:nth-child(2) {
+  animation-delay: 0.1s;
+}
+
+.celebration-img:nth-child(3) {
+  animation-delay: 0.2s;
+}
+
+.celebration-img:nth-child(4) {
+  animation-delay: 0.3s;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-15px); }
+}
+
 .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 1.5rem; }
 .stat { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 14px; text-align: center; }
 .stat-num { font-size: 26px; font-weight: 500; }
@@ -94,6 +128,12 @@ button:disabled { opacity: 0.35; cursor: default; }
 <div id="results">
   <h2>Quiz complete!</h2>
   <p>Here's how you did across all four sections.</p>
+  <div id="celebration-images">
+    <img class="celebration-img" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='48' fill='%23FFD700'/%3E%3Ctext x='50' y='60' font-size='50' text-anchor='middle' fill='%23FFA500'%3E⭐%3C/text%3E%3C/svg%3E" alt="Star">
+    <img class="celebration-img" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='48' fill='%23FFB6C1'/%3E%3Ctext x='50' y='60' font-size='50' text-anchor='middle' fill='%23FF69B4'%3E🎉%3C/text%3E%3C/svg%3E" alt="Party">
+    <img class="celebration-img" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='48' fill='%2398FB98'/%3E%3Ctext x='50' y='60' font-size='50' text-anchor='middle' fill='%2300B800'%3E✅%3C/text%3E%3C/svg%3E" alt="Check">
+    <img class="celebration-img" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='48' fill='%2387CEEB'/%3E%3Ctext x='50' y='60' font-size='50' text-anchor='middle' fill='%230047AB'%3E🏆%3C/text%3E%3C/svg%3E" alt="Trophy">
+  </div>
   <div class="stat-grid">
     <div class="stat good"><div class="stat-num" id="r-correct"></div><div class="stat-lbl">Correct</div></div>
     <div class="stat bad"><div class="stat-num" id="r-wrong"></div><div class="stat-lbl">Incorrect</div></div>
