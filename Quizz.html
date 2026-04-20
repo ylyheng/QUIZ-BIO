@@ -1,13 +1,34 @@
-<style>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Biology Quiz</title>
+  <style>
+:root {
+  --font-sans: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --color-background-primary: #ffffff;
+  --color-background-secondary: #f0f1f3;
+  --color-text-primary: #1a1a1a;
+  --color-text-secondary: #666666;
+  --color-border-primary: #d1d5db;
+  --color-border-secondary: #e5e7eb;
+  --color-border-tertiary: #f0f0f0;
+  --border-radius-md: 8px;
+}
+
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
   font-family: var(--font-sans);
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  justify-content: flex-start;
   align-items: center;
-  height: 100vh;
+  min-height: 100vh;
+  padding: 20px;
   background: #f5f7fb;
+  color: #1a1a1a !important;
 }
 
 /* Center container */
@@ -18,27 +39,37 @@ body {
   padding: 20px;
   border-radius: 16px;
   box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  margin-top: 20px;
+  overflow: visible;
+  min-height: auto;
+}
+
+#quiz-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
 }
 
 /* keep your original styles below */
 #progress-bar-bg { height: 6px; background: var(--color-background-secondary); border-radius: 99px; margin-bottom: 1.5rem; }
 #progress-bar { height: 6px; background: #534AB7; border-radius: 99px; transition: width 0.3s; }
-#section-label { font-size: 12px; font-weight: 500; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.5rem; }
-#q-counter { font-size: 13px; color: var(--color-text-secondary); margin-bottom: 0.75rem; }
-#q-text { font-size: 17px; font-weight: 500; color: var(--color-text-primary); line-height: 1.5; margin-bottom: 1.25rem; }
+#section-label { font-size: 12px !important; font-weight: 500; color: #666666 !important; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.5rem; display: block !important; }
+#q-counter { font-size: 13px !important; color: #666666 !important; margin-bottom: 0.75rem; display: block !important; }
+#q-text { font-size: 18px !important; font-weight: 600; color: #1a1a1a !important; line-height: 1.6; margin-bottom: 1.25rem; display: block !important; min-height: 60px; }
+#options { display: block !important; margin-bottom: 1rem; min-height: 100px; }
 
-.opt { display: flex; align-items: flex-start; gap: 12px; padding: 12px 14px; border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); margin-bottom: 8px; cursor: pointer; background: var(--color-background-primary); transition: border-color 0.15s, background 0.15s; }
+.opt { display: flex !important; align-items: flex-start; gap: 12px; padding: 12px 14px; border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); margin-bottom: 8px; cursor: pointer; background: var(--color-background-primary); transition: border-color 0.15s, background 0.15s; min-height: 50px; }
 .opt:hover { border-color: var(--color-border-secondary); background: var(--color-background-secondary); }
 .opt.selected { border-color: #534AB7; background: #EEEDFE; }
 .opt.correct { border-color: #0F6E56; background: #E1F5EE; }
 .opt.wrong { border-color: #993C1D; background: #FAECE7; }
 
-.opt-letter { width: 22px; height: 22px; min-width: 22px; border-radius: 50%; border: 1.5px solid var(--color-border-secondary); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 500; color: var(--color-text-secondary); }
+.opt-letter { width: 22px; height: 22px; min-width: 22px; border-radius: 50%; border: 1.5px solid var(--color-border-secondary); display: flex !important; align-items: center; justify-content: center; font-size: 12px; font-weight: 500; color: var(--color-text-secondary); }
 .opt.selected .opt-letter { border-color: #534AB7; background: #534AB7; color: #fff; }
 .opt.correct .opt-letter { border-color: #0F6E56; background: #0F6E56; color: #fff; }
 .opt.wrong .opt-letter { border-color: #993C1D; background: #993C1D; color: #fff; }
 
-.opt-text { font-size: 15px; color: var(--color-text-primary); line-height: 1.4; padding-top: 1px; }
+.opt-text { font-size: 15px !important; color: #1a1a1a !important; line-height: 1.5; padding-top: 1px; display: block !important; }
 
 #feedback { margin-top: 10px; font-size: 14px; padding: 10px 14px; border-radius: var(--border-radius-md); display: none; line-height: 1.5; }
 #feedback.correct { background: #E1F5EE; color: #0F6E56; }
@@ -65,40 +96,6 @@ button:disabled { opacity: 0.35; cursor: default; }
 
 #results { display: none; text-align: center; }
 
-#celebration-images {
-  display: flex;
-  justify-content: center;
-  gap: 15px;
-  margin-bottom: 2rem;
-  flex-wrap: wrap;
-}
-
-.celebration-img {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  object-fit: cover;
-  box-shadow: 0 4px 12px rgba(83, 74, 183, 0.2);
-  animation: bounce 1.5s infinite;
-}
-
-.celebration-img:nth-child(2) {
-  animation-delay: 0.1s;
-}
-
-.celebration-img:nth-child(3) {
-  animation-delay: 0.2s;
-}
-
-.celebration-img:nth-child(4) {
-  animation-delay: 0.3s;
-}
-
-@keyframes bounce {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-15px); }
-}
-
 .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 1.5rem; }
 .stat { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 14px; text-align: center; }
 .stat-num { font-size: 26px; font-weight: 500; }
@@ -114,33 +111,27 @@ button:disabled { opacity: 0.35; cursor: default; }
 
 <div id="quiz-wrap">
   <div id="progress-bar-bg"><div id="progress-bar" style="width:2%"></div></div>
-  <div id="section-label"></div>
-  <div id="q-counter"></div>
-  <div id="q-text"></div>
+  <div id="section-label" style="color: #333; font-size: 14px;"></div>
+  <div id="q-counter" style="color: #333; font-size: 14px;"></div>
+  <div id="q-text" style="color: #1a1a1a; font-size: 20px; font-weight: bold;"></div>
   <div id="options"></div>
   <div id="feedback"></div>
   <div id="btn-row">
-    <div id="score-mini"></div>
+    <div id="score-mini" style="color: #333;"></div>
     <button id="btn-next" onclick="nextQ()" disabled>Next →</button>
   </div>
 </div>
 
 <div id="results">
-  <h2>Quiz complete!</h2>
-  <p>Here's how you did across all four sections.</p>
-  <div id="celebration-images">
-    <img class="celebration-img" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='48' fill='%23FFD700'/%3E%3Ctext x='50' y='60' font-size='50' text-anchor='middle' fill='%23FFA500'%3E⭐%3C/text%3E%3C/svg%3E" alt="Star">
-    <img class="celebration-img" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='48' fill='%23FFB6C1'/%3E%3Ctext x='50' y='60' font-size='50' text-anchor='middle' fill='%23FF69B4'%3E🎉%3C/text%3E%3C/svg%3E" alt="Party">
-    <img class="celebration-img" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='48' fill='%2398FB98'/%3E%3Ctext x='50' y='60' font-size='50' text-anchor='middle' fill='%2300B800'%3E✅%3C/text%3E%3C/svg%3E" alt="Check">
-    <img class="celebration-img" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='48' fill='%2387CEEB'/%3E%3Ctext x='50' y='60' font-size='50' text-anchor='middle' fill='%230047AB'%3E🏆%3C/text%3E%3C/svg%3E" alt="Trophy">
-  </div>
+  <h2 style="color: #1a1a1a; margin-bottom: 1rem;">Quiz complete!</h2>
+  <p style="color: #666; margin-bottom: 1.5rem;">Here's how you did across all four sections.</p>
   <div class="stat-grid">
     <div class="stat good"><div class="stat-num" id="r-correct"></div><div class="stat-lbl">Correct</div></div>
     <div class="stat bad"><div class="stat-num" id="r-wrong"></div><div class="stat-lbl">Incorrect</div></div>
     <div class="stat total"><div class="stat-num" id="r-pct"></div><div class="stat-lbl">Score</div></div>
   </div>
   <div id="section-breakdown">
-    <h3>Performance by section</h3>
+    <h3 style="color: #1a1a1a; margin-bottom: 1rem;">Performance by section</h3>
     <div id="sec-rows"></div>
   </div>
   <button id="btn-retry" onclick="restart()">Retake quiz</button>
@@ -218,7 +209,8 @@ function render() {
   q.o.forEach((o,i) => {
     const d = document.createElement('div');
     d.className = 'opt';
-    d.innerHTML = `<div class="opt-letter">${letters[i]}</div><div class="opt-text">${o}</div>`;
+    d.style.color = '#1a1a1a';
+    d.innerHTML = `<div class="opt-letter">${letters[i]}</div><div class="opt-text" style="color: #1a1a1a; font-size: 15px;">${o}</div>`;
     d.onclick = () => select(i);
     opts.appendChild(d);
   });
@@ -287,3 +279,5 @@ function restart() {
 
 render();
 </script>
+  </body>
+</html>
