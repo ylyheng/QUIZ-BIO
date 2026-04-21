@@ -107,9 +107,160 @@ button:disabled { opacity: 0.35; cursor: default; }
 
 #btn-retry { background: #534AB7; color: #fff; border-color: #534AB7; }
 #btn-retry:hover { background: #3C3489; }
+
+/* Session selection styles */
+#session-select {
+  width: 100%;
+  max-width: 660px;
+  background: white;
+  padding: 20px;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  margin-top: 20px;
+}
+
+#session-select h2 {
+  color: #1a1a1a;
+  margin-bottom: 1.5rem;
+  font-size: 24px;
+}
+
+#session-select p {
+  color: #666;
+  margin-bottom: 1.5rem;
+  font-size: 15px;
+}
+
+.session-list {
+  margin-bottom: 1.5rem;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--color-border-secondary);
+}
+
+.session-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  border-bottom: 1px solid var(--color-border-tertiary);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.session-item:last-child {
+  border-bottom: none;
+}
+
+.session-item:hover {
+  background: var(--color-background-secondary);
+}
+
+.session-item input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: #534AB7;
+}
+
+.session-label {
+  flex: 1;
+  cursor: pointer;
+  color: #1a1a1a;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+#btn-start-quiz {
+  background: #534AB7;
+  color: #fff;
+  border-color: #534AB7;
+  padding: 10px 24px;
+  font-size: 15px;
+  width: 100%;
+}
+
+#btn-start-quiz:hover {
+  background: #3C3489;
+}
+
+#btn-start-quiz:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.session-select-buttons {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 1.5rem;
+}
+
+.session-select-buttons button {
+  flex: 1;
+  padding: 10px;
+  font-size: 13px;
+}
+
+#btn-select-all {
+  background: var(--color-background-secondary);
+}
+
+#btn-select-none {
+  background: var(--color-background-secondary);
+}
+
+.sec-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+  padding: 12px;
+  background: var(--color-background-secondary);
+  border-radius: var(--border-radius-md);
+}
+
+.sec-name {
+  flex: 0 0 140px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text-primary);
+}
+
+.sec-bar-bg {
+  flex: 1;
+  height: 8px;
+  background: var(--color-border-secondary);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.sec-bar {
+  height: 100%;
+  background: #534AB7;
+  transition: width 0.3s;
+}
+
+.sec-score {
+  flex: 0 0 50px;
+  text-align: right;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+}
 </style>
 
-<div id="quiz-wrap">
+<div id="session-select" style="display: flex; flex-direction: column;">
+  <h2>Select Sessions</h2>
+  <p>Choose which sections you'd like to quiz on:</p>
+  <div class="session-select-buttons">
+    <button id="btn-select-all">Select All</button>
+    <button id="btn-select-none">Deselect All</button>
+  </div>
+  <div class="session-list" id="session-list"></div>
+  <button id="btn-start-quiz" disabled>Start Quiz</button>
+</div>
+
+<div id="quiz-wrap" style="display: none;">
   <div id="progress-bar-bg"><div id="progress-bar" style="width:2%"></div></div>
   <div id="section-label" style="color: #333; font-size: 14px;"></div>
   <div id="q-counter" style="color: #333; font-size: 14px;"></div>
@@ -122,7 +273,7 @@ button:disabled { opacity: 0.35; cursor: default; }
   </div>
 </div>
 
-<div id="results">
+<div id="results" style="display: none;">
   <h2 style="color: #1a1a1a; margin-bottom: 1rem;">Quiz complete!</h2>
   <p style="color: #666; margin-bottom: 1.5rem;">Here's how you did across all four sections.</p>
   <div class="stat-grid">
@@ -236,13 +387,87 @@ const letters = ["A","B","C","D"];
 
 let current = 0, score = 0, answered = false;
 let sectionScores = [[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0]];
+let selectedSessions = [true, true, true, true, true, true, true, true]; // Track selected sessions
+let filteredQuestions = []; // Questions for selected sessions only
+let sessionIndexMap = {}; // Map question index in filteredQuestions to original section
+
+function initSessionSelection() {
+  const sessionList = document.getElementById('session-list');
+  sessionList.innerHTML = '';
+  
+  sections.forEach((section, index) => {
+    const item = document.createElement('div');
+    item.className = 'session-item';
+    item.innerHTML = `
+      <input type="checkbox" id="session-${index}" class="session-checkbox" ${selectedSessions[index] ? 'checked' : ''}>
+      <label for="session-${index}" class="session-label">${section}</label>
+    `;
+    item.onclick = (e) => {
+      if (e.target.tagName !== 'INPUT') {
+        const checkbox = item.querySelector('input[type="checkbox"]');
+        checkbox.checked = !checkbox.checked;
+      }
+      updateSessionSelection();
+    };
+    sessionList.appendChild(item);
+  });
+
+  document.getElementById('btn-select-all').onclick = () => {
+    document.querySelectorAll('.session-checkbox').forEach(cb => cb.checked = true);
+    updateSessionSelection();
+  };
+
+  document.getElementById('btn-select-none').onclick = () => {
+    document.querySelectorAll('.session-checkbox').forEach(cb => cb.checked = false);
+    updateSessionSelection();
+  };
+
+  document.getElementById('btn-start-quiz').onclick = startQuiz;
+}
+
+function updateSessionSelection() {
+  selectedSessions = [];
+  document.querySelectorAll('.session-checkbox').forEach((cb, index) => {
+    selectedSessions[index] = cb.checked;
+  });
+  
+  const anySelected = selectedSessions.some(s => s);
+  document.getElementById('btn-start-quiz').disabled = !anySelected;
+}
+
+function buildFilteredQuestions() {
+  filteredQuestions = [];
+  sessionIndexMap = {};
+  
+  questions.forEach((q, originalIndex) => {
+    if (selectedSessions[q.s]) {
+      sessionIndexMap[filteredQuestions.length] = originalIndex;
+      filteredQuestions.push(q);
+    }
+  });
+}
+
+function startQuiz() {
+  buildFilteredQuestions();
+  if (filteredQuestions.length === 0) return;
+  
+  current = 0;
+  score = 0;
+  answered = false;
+  sectionScores = [[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0]];
+  
+  document.getElementById('session-select').style.display = 'none';
+  document.getElementById('quiz-wrap').style.display = 'flex';
+  document.getElementById('results').style.display = 'none';
+  render();
+}
 
 function render() {
-  const q = questions[current];
+  const q = filteredQuestions[current];
   document.getElementById('section-label').textContent = sections[q.s];
-  document.getElementById('q-counter').textContent = `Question ${current+1} of ${questions.length}`;
+  document.getElementById('q-counter').textContent = `Question ${current+1} of ${filteredQuestions.length}`;
   document.getElementById('q-text').textContent = q.q;
-  document.getElementById('progress-bar').style.width = `${((current)/questions.length)*100+2}%`;
+  document.getElementById('progress-bar').style.width = `${((current)/filteredQuestions.length)*100+2}%`;
   document.getElementById('score-mini').textContent = `Score: ${score}/${current}`;
   const opts = document.getElementById('options');
   opts.innerHTML = '';
@@ -262,7 +487,7 @@ function render() {
 function select(i) {
   if (answered) return;
   answered = true;
-  const q = questions[current];
+  const q = filteredQuestions[current];
   const opts = document.getElementById('options').children;
   const fb = document.getElementById('feedback');
   sectionScores[q.s][1]++;
@@ -285,7 +510,7 @@ function select(i) {
 
 function nextQ() {
   current++;
-  if (current >= questions.length) { showResults(); return; }
+  if (current >= filteredQuestions.length) { showResults(); return; }
   render();
 }
 
@@ -294,11 +519,12 @@ function showResults() {
   const r = document.getElementById('results');
   r.style.display = 'block';
   document.getElementById('r-correct').textContent = score;
-  document.getElementById('r-wrong').textContent = questions.length - score;
-  document.getElementById('r-pct').textContent = Math.round(score/questions.length*100) + '%';
+  document.getElementById('r-wrong').textContent = filteredQuestions.length - score;
+  document.getElementById('r-pct').textContent = Math.round(score/filteredQuestions.length*100) + '%';
   const sr = document.getElementById('sec-rows');
   sr.innerHTML = '';
   sections.forEach((name, i) => {
+    if (!selectedSessions[i]) return; // Only show selected sessions
     const [c, t] = sectionScores[i];
     const pct = t ? Math.round(c/t*100) : 0;
     sr.innerHTML += `<div class="sec-row">
@@ -313,11 +539,12 @@ function restart() {
   current = 0; score = 0; answered = false;
   sectionScores = [[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0]];
   document.getElementById('results').style.display = 'none';
-  document.getElementById('quiz-wrap').style.display = 'block';
-  render();
+  document.getElementById('session-select').style.display = 'flex';
+  document.getElementById('quiz-wrap').style.display = 'none';
+  initSessionSelection();
 }
 
-render();
+initSessionSelection();
 </script>
   </body>
 </html>
